@@ -1,5 +1,5 @@
 {
-  "name": "mini-vue",
+  "name": "@mini-vue/runtime-core",
   "version": "1.0.0",
   "description": "",
   "author": "priority",
@@ -7,5 +7,8 @@
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@mini-vue/reactivity": "workspace:*"
   }
 }
