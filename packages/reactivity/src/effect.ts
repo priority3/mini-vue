@@ -20,9 +20,11 @@ export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
     cleanupEffect(effectFn)
     activeEffect = effectFn
     effectStack.push(effectFn)
-    fn()
+    const res = fn()
     effectStack.pop()
     activeEffect = effectStack[effectStack.length - 1]
+
+    return res
   }
   effectFn.options = options
   effectFn.deps = []
