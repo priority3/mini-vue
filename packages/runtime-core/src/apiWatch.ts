@@ -5,16 +5,18 @@ export type WatchSource<T = any> = () => T
 export type WatchCallback<V = any, OV = any> = (
   value: V,
   oldValue: OV,
-  // onCleanup: () => void
+  onCleanup: (fn: () => void) => void
 ) => any
 export interface WatchOptions<Immediate = boolean> {
   immediate?: Immediate
   deep?: boolean
+  flush?: 'pre' | 'post'
 }
 
 export function watch(
-  source: WatchSource | object, cb: WatchCallback | null,
-  { immediate }: WatchOptions = {},
+  source: WatchSource | object,
+  cb: WatchCallback | null,
+  { immediate, flush = 'pre' }: WatchOptions = {},
 ) {
   let getter
   if (typeof source === 'function')
@@ -25,9 +27,22 @@ export function watch(
 
   let oldValue, newValue
 
+  let cleanUp
+  function onInvalidate(fn: () => void) {
+    cleanUp = fn
+  }
+
   const effectFn = effect(getter, {
     lazy: true,
-    scheduler: schedulerJob,
+    scheduler: () => {
+      if (flush === 'post') {
+        const p = Promise.resolve()
+        p.then(schedulerJob)
+      }
+      else {
+        schedulerJob()
+      }
+    },
   })
 
   if (immediate)
@@ -48,8 +63,10 @@ export function watch(
   }
 
   function schedulerJob() {
+    if (cleanUp)
+      cleanUp()
     newValue = effectFn()
-    cb && cb(newValue, oldValue)
+    cb && cb(newValue, oldValue, onInvalidate)
     oldValue = newValue
   }
 }

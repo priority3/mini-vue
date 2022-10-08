@@ -27,4 +27,28 @@ describe('api: watch', () => {
     })
     expect(dummy).toBe(1)
   })
+
+  // it('watch post', async () => {
+  //   const state = reactive({ count: 0 })
+  //   const arr: Array<never | number> = []
+  //   watch(state, () => {
+  //     arr.push(1)
+  //   }, {
+  //     flush: 'post',
+  //   })
+  //   expect(arr).toMatchObject([])
+  // })
+
+  it('watch clean up', () => {
+    const state = reactive({ count: 0 })
+    let dummy
+    watch(state, (oldValue, newValue, onInvalidate) => {
+      onInvalidate(() => {
+        dummy = newValue.count
+      })
+      dummy = oldValue.count
+    })
+    state.count++
+    expect(dummy).toBe(1)
+  })
 })
