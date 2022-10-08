@@ -42,9 +42,11 @@ export function track(target: object, key: unknown) {
   if (!dep)
     depsMap.set(key, (dep = new Set()))
 
-  dep.add(activeEffect)
+  if (activeEffect) {
+    dep.add(activeEffect)
 
-  activeEffect.deps.push(dep)
+    activeEffect.deps.push(dep)
+  }
 }
 
 // `set`: trigger value
