@@ -6,9 +6,16 @@ let activeEffect
 const effectStack: Array<{
   (): void
   deps: any[]
+  options: ReactiveEffectOptions | undefined
 }> = []
 
-export function effect<T = any>(fn: () => T) {
+export type EffectScheduler = (...args: any[]) => any
+export interface ReactiveEffectOptions {
+  lazy?: boolean
+  scheduler?: EffectScheduler
+}
+
+export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
   const effectFn = () => {
     cleanupEffect(effectFn)
     activeEffect = effectFn
@@ -17,7 +24,7 @@ export function effect<T = any>(fn: () => T) {
     effectStack.pop()
     activeEffect = effectStack[effectStack.length - 1]
   }
-
+  effectFn.options = options
   effectFn.deps = []
   effectFn()
 
@@ -55,11 +62,17 @@ export function trigger(target: object, key: unknown) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
   const effects = depsMap.get(key)
-  const effectToRun = new Set<any>()
-  effects && effects.forEach((effect) => {
-    if (effect !== activeEffect)
-      effectToRun.add(effect)
+  const effectsToRun = new Set<any>()
+  effects && effects.forEach((effectFn) => {
+    if (effectFn !== activeEffect)
+      effectsToRun.add(effectFn)
   })
-  effectToRun.forEach(effect => effect())
+
+  effectsToRun.forEach((effectFn) => {
+    if (effectFn?.options?.scheduler)
+      effectFn.options.scheduler(effectFn)
+    else
+      effectFn()
+  })
 }
 
