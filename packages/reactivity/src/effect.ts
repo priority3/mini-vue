@@ -4,10 +4,24 @@ const targetMap = new WeakMap<any, KeyToDepMap>()
 let activeEffect
 
 export function effect<T = any>(fn: () => T) {
-  activeEffect = fn
-  fn()
+  const effectFn = () => {
+    cleanupEffect(effectFn)
+    activeEffect = effectFn
+    fn()
+  }
 
-  return effect
+  effectFn.deps = []
+  effectFn()
+
+  return effectFn
+}
+
+function cleanupEffect(effectFn: any) {
+  for (let i = 0; i < effectFn.deps.length; i++) {
+    const deps = effectFn.deps[i]
+    deps.delete(effectFn)
+  }
+  effectFn.deps.length = 0
 }
 
 // `get`: track value
@@ -21,6 +35,8 @@ export function track(target: object, key: unknown) {
     depsMap.set(key, (dep = new Set()))
 
   dep.add(activeEffect)
+
+  activeEffect.deps.push(dep)
 }
 
 // `set`: trigger value
@@ -29,6 +45,7 @@ export function trigger(target: object, key: unknown) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
   const effects = depsMap.get(key)
-  effects && effects.forEach(effect => effect())
+  const effectToRun = new Set(effects)
+  effectToRun.forEach(effect => effect())
 }
 
