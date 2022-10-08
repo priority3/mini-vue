@@ -7,6 +7,7 @@ describe('reactivity/effect', () => {
     let val
     effect(() => {
       val = ret.num
+      ret.num++
     })
     expect(val).toBe(0)
     // ret.num++
