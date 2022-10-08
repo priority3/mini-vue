@@ -18,6 +18,12 @@ importers:
       vitest: 0.23.4
       vue: 3.2.40
 
+  packages/runtime-core:
+    specifiers:
+      '@mini-vue/reactivity': workspace:^1.0.0
+    dependencies:
+      '@mini-vue/reactivity': link:../reactivity
+
 packages:
 
   /@babel/code-frame/7.18.6:

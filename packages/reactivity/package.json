@@ -1,10 +1,10 @@
 {
-  "name": "reactivity",
+  "name": "@mini-vue/reactivity",
   "version": "1.0.0",
   "description": "",
   "author": "priority",
   "license": "MIT",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   }
