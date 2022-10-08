@@ -92,5 +92,21 @@ describe('reactivity/effect', () => {
     handleFn()
     expect(fn).toHaveBeenCalledTimes(1)
   })
+  it('proxy receiver', () => {
+    const data = {
+      foo: 'foo',
+      get bar() {
+        return this.foo
+      },
+    }
+    const obj = reactive(data)
+    const arr: Array<never | number> = []
+    effect(() => {
+      arr.push(obj.bar)
+    })
+    expect(arr.join(',')).toBe('foo')
+    obj.foo = 'foo2'
+    expect(arr.join(',')).toBe('foo,foo2')
+  })
 })
 
