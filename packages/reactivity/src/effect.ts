@@ -53,7 +53,11 @@ export function trigger(target: object, key: unknown) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
   const effects = depsMap.get(key)
-  const effectToRun = new Set(effects)
+  const effectToRun = new Set<any>()
+  effects && effects.forEach((effect) => {
+    if (effect !== activeEffect)
+      effectToRun.add(effect)
+  })
   effectToRun.forEach(effect => effect())
 }
 
