@@ -10,8 +10,8 @@ describe('reactivity/effect', () => {
       ret.num++
     })
     expect(val).toBe(0)
-    // ret.num++
-    // expect(val).toBe(1)
+    ret.num++
+    expect(val).toBe(2)
     ret.num = 10
     expect(val).toBe(10)
   })
