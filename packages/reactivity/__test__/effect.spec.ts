@@ -85,5 +85,13 @@ describe('reactivity/effect', () => {
     expect(arr.join(',')).toBe('1,end,2')
     expect(arr1.join(',')).toBe('1,2,end')
   })
+
+  it('effect lazy mode', () => {
+    const fn = vi.fn()
+    const handleFn = effect(fn, { lazy: true })
+    expect(fn).toHaveBeenCalledTimes(0)
+    handleFn()
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
 })
 

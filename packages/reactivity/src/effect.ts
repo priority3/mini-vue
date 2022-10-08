@@ -26,7 +26,8 @@ export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
   }
   effectFn.options = options
   effectFn.deps = []
-  effectFn()
+  if (!options?.lazy)
+    effectFn()
 
   return effectFn
 }
