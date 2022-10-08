@@ -1,7 +1,13 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effect, reactive } from '../src'
 
 describe('reactivity/effect', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
   it('basic use)', () => {
     const ret = reactive({ num: 0 })
     let val
@@ -31,7 +37,6 @@ describe('reactivity/effect', () => {
     obj.text = 'world'
     expect(fn).toHaveBeenCalledTimes(2)
   })
-
   it('nesting effect', () => {
     const data = { foo: 'foo', bar: 'bar' }
     const obj = reactive(data)
@@ -54,6 +59,31 @@ describe('reactivity/effect', () => {
 
     expect(temp1).toBe('foo2')
     expect(temp2).toBe('bar')
+  })
+  it('dispatch custom', async () => {
+    const data = { age: 1 }
+    // 对原始数据的代理
+    const obj = reactive(data)
+    const arr1: Array<number | string> = []
+    effect(() => {
+      arr1.push(obj.age)
+    })
+
+    const arr: Array<number | string> = []
+    effect(() => {
+      arr.push(obj.age)
+    }, {
+      scheduler(fn) {
+        setTimeout(fn) // 下一个任务循环
+      },
+    })
+    obj.age = 2
+    arr.push('end')
+    arr1.push('end')
+    // set
+    await vi.runAllTimers()
+    expect(arr.join(',')).toBe('1,end,2')
+    expect(arr1.join(',')).toBe('1,2,end')
   })
 })
 
