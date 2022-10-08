@@ -16,4 +16,15 @@ describe('api: watch', () => {
     // await nextTick()
     expect(dummy).toMatchObject([1, 0])
   })
+
+  it('watch immediate', () => {
+    const state = reactive({ count: 0 })
+    let dummy
+    watch(state, () => {
+      dummy = state.count + 1
+    }, {
+      immediate: true,
+    })
+    expect(dummy).toBe(1)
+  })
 })

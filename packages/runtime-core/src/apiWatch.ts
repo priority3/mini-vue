@@ -7,27 +7,33 @@ export type WatchCallback<V = any, OV = any> = (
   oldValue: OV,
   // onCleanup: () => void
 ) => any
+export interface WatchOptions<Immediate = boolean> {
+  immediate?: Immediate
+  deep?: boolean
+}
 
-export function watch(source: WatchSource | object, cb: WatchCallback | null) {
+export function watch(
+  source: WatchSource | object, cb: WatchCallback | null,
+  { immediate }: WatchOptions = {},
+) {
   let getter
   if (typeof source === 'function')
     getter = source
 
   else
-    getter = traverse(source)
+    getter = () => traverse(source)
 
   let oldValue, newValue
 
   const effectFn = effect(getter, {
     lazy: true,
-    scheduler(effect) {
-      newValue = effect()
-      cb && cb(newValue, oldValue)
-      oldValue = newValue
-    },
+    scheduler: schedulerJob,
   })
 
-  oldValue = effectFn()
+  if (immediate)
+    schedulerJob()
+  else
+    oldValue = effectFn()
 
   function traverse(value: object, seen = new Set()) {
     if (typeof value !== 'object' || value === null
@@ -39,5 +45,11 @@ export function watch(source: WatchSource | object, cb: WatchCallback | null) {
       traverse(value[k], seen)
 
     return value
+  }
+
+  function schedulerJob() {
+    newValue = effectFn()
+    cb && cb(newValue, oldValue)
+    oldValue = newValue
   }
 }
