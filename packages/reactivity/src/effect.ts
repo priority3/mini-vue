@@ -3,11 +3,19 @@ const targetMap = new WeakMap<any, KeyToDepMap>()
 
 let activeEffect
 
+const effectStack: Array<{
+  (): void
+  deps: any[]
+}> = []
+
 export function effect<T = any>(fn: () => T) {
   const effectFn = () => {
     cleanupEffect(effectFn)
     activeEffect = effectFn
+    effectStack.push(effectFn)
     fn()
+    effectStack.pop()
+    activeEffect = effectStack[effectStack.length - 1]
   }
 
   effectFn.deps = []
