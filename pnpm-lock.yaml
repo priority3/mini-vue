@@ -18,11 +18,23 @@ importers:
       vitest: 0.23.4
       vue: 3.2.40
 
+  packages/reactivity:
+    specifiers:
+      '@mini-vue/shared': workspace:^1.0.0
+    dependencies:
+      '@mini-vue/shared': link:../shared
+
   packages/runtime-core:
     specifiers:
-      '@mini-vue/reactivity': workspace:^1.0.0
+      '@mini-vue/reactivity': workspace:*
     dependencies:
       '@mini-vue/reactivity': link:../reactivity
+
+  packages/shared:
+    specifiers: {}
+
+  packages/vue:
+    specifiers: {}
 
 packages:
 

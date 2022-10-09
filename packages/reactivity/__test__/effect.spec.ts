@@ -120,5 +120,19 @@ describe('reactivity/effect', () => {
     obj.foo++
     expect(arr.join(',')).toBe('1,1')
   })
+
+  it('effect track \`for in\`', () => {
+    const data = { foo: 1 }
+    const obj = reactive(data)
+    const forFn = vi.fn((arg: Array<string | symbol>) => arg)
+    effect(() => {
+      forFn(Object.keys(obj))
+    })
+    expect(forFn).toHaveBeenCalledTimes(1)
+    obj.age = 1
+    expect(forFn).toHaveBeenCalledTimes(2)
+
+    // obj.foo++
+  })
 })
 

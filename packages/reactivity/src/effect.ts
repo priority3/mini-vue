@@ -1,3 +1,5 @@
+import { TrackOpTypes, TriggerOpTypes } from './operations'
+
 type KeyToDepMap = Map<any, Set<any>>
 const targetMap = new WeakMap<any, KeyToDepMap>()
 
@@ -61,7 +63,7 @@ export function track(target: object, key: unknown) {
 
 // `set`: trigger value
 
-export function trigger(target: object, key: unknown) {
+export function trigger(target: object, type: TriggerOpTypes, key: unknown) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
   const effects = depsMap.get(key)
@@ -70,6 +72,14 @@ export function trigger(target: object, key: unknown) {
     if (effectFn !== activeEffect)
       effectsToRun.add(effectFn)
   })
+
+  if (type === TriggerOpTypes.ADD) {
+    const iterateEffects = depsMap.get(TrackOpTypes.ITERATE)
+    iterateEffects && iterateEffects.forEach((effectFn) => {
+      if (effectFn !== activeEffect)
+        effectsToRun.add(effectFn)
+    })
+  }
 
   effectsToRun.forEach((effectFn) => {
     if (effectFn?.options?.scheduler)

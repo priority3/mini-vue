@@ -1,4 +1,5 @@
 import { effect, track, trigger } from './effect'
+import { TriggerOpTypes } from './operations'
 
 export type ComputedGetter<T> = (...args: any[]) => T
 export function computed<T>(
@@ -11,7 +12,7 @@ export function computed<T>(
     lazy: true,
     scheduler() {
       dirty = true
-      trigger(resObj, 'value')
+      trigger(resObj, TriggerOpTypes.SET, 'value')
     },
 
   })
