@@ -1,4 +1,7 @@
+// import { isIntegerKey } from '@mini-vue/shared'
+import { hasOwn } from '@mini-vue/shared'
 import { track, trigger } from './effect'
+import { TrackOpTypes, TriggerOpTypes } from './operations'
 
 const get = createGetter()
 function createGetter() {
@@ -22,7 +25,13 @@ function createSetter() {
     receiver: object,
   ) {
     const result = Reflect.set(target, key, value, receiver)
-    trigger(target, key)
+
+    const hadKey = hasOwn(target, key)
+
+    if (hadKey)
+      trigger(target, TriggerOpTypes.SET, key)
+    else
+      trigger(target, TriggerOpTypes.ADD, key)
 
     return result
   }
@@ -30,14 +39,24 @@ function createSetter() {
 
 function has(target: object, key: string | symbol) {
   const result = Reflect.has(target, key)
+
   track(target, key)
 
   return result
 }
 
+function ownKeys(target: object) {
+  track(target, TrackOpTypes.ITERATE)
+
+  return Reflect.ownKeys(target)
+}
+
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
+  // in
   has,
+  // for in
+  ownKeys,
 }
 
