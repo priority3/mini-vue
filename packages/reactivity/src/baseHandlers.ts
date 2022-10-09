@@ -28,8 +28,16 @@ function createSetter() {
   }
 }
 
+function has(target: object, key: string | symbol) {
+  const result = Reflect.has(target, key)
+  track(target, key)
+
+  return result
+}
+
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
+  has,
 }
 
