@@ -108,5 +108,17 @@ describe('reactivity/effect', () => {
     obj.foo = 'foo2'
     expect(arr.join(',')).toBe('foo,foo2')
   })
+
+  it('effect track \`in\`', () => {
+    const data = { foo: 1 }
+    const obj = reactive(data)
+    const arr: Array<never | number> = []
+    effect(() => {
+      'foo' in obj
+      arr.push(1)
+    })
+    obj.foo++
+    expect(arr.join(',')).toBe('1,1')
+  })
 })
 
