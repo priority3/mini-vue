@@ -24,10 +24,9 @@ function createSetter() {
     value: unknown,
     receiver: object,
   ) {
-    const result = Reflect.set(target, key, value, receiver)
-
     const hadKey = hasOwn(target, key)
 
+    const result = Reflect.set(target, key, value, receiver)
     if (hadKey)
       trigger(target, TriggerOpTypes.SET, key)
     else
@@ -44,7 +43,10 @@ function has(target: object, key: string | symbol) {
 
   return result
 }
-
+// - Object.getOwnPropertyNames()
+// - Object.getOwnPropertySymbols()
+// - Object.keys()
+// - for…in
 function ownKeys(target: object) {
   track(target, TrackOpTypes.ITERATE)
 

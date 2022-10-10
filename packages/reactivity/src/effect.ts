@@ -3,7 +3,7 @@ import { TrackOpTypes, TriggerOpTypes } from './operations'
 type KeyToDepMap = Map<any, Set<any>>
 const targetMap = new WeakMap<any, KeyToDepMap>()
 
-let activeEffect
+let activeEffect: effectFnType | undefined
 
 const effectStack: Array<{
   (): void
@@ -16,12 +16,18 @@ export interface ReactiveEffectOptions {
   lazy?: boolean
   scheduler?: EffectScheduler
 }
+export type effectFnType = ReturnType<typeof effect>
 
-export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
+export function effect<T = any>(
+  fn: () => T,
+  options?: ReactiveEffectOptions,
+) {
   const effectFn = () => {
     cleanupEffect(effectFn)
     activeEffect = effectFn
+    // nested effect
     effectStack.push(effectFn)
+    // to computed
     const res = fn()
     effectStack.pop()
     activeEffect = effectStack[effectStack.length - 1]
@@ -46,19 +52,19 @@ function cleanupEffect(effectFn: any) {
 
 // `get`: track value
 export function track(target: object, key: unknown) {
+  if (!activeEffect)
+    return
+
   let depsMap = targetMap.get(target)
   if (!depsMap)
     targetMap.set(target, (depsMap = new Map()))
 
-  let dep = depsMap.get(key)
-  if (!dep)
-    depsMap.set(key, (dep = new Set()))
+  let deps = depsMap.get(key)
+  if (!deps)
+    depsMap.set(key, (deps = new Set()))
 
-  if (activeEffect) {
-    dep.add(activeEffect)
-
-    activeEffect.deps.push(dep)
-  }
+  deps.add(activeEffect)
+  activeEffect.deps.push(deps)
 }
 
 // `set`: trigger value
@@ -66,8 +72,10 @@ export function track(target: object, key: unknown) {
 export function trigger(target: object, type: TriggerOpTypes, key: unknown) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
+
   const effects = depsMap.get(key)
-  const effectsToRun = new Set<any>()
+
+  const effectsToRun = new Set<effectFnType>([])
   effects && effects.forEach((effectFn) => {
     if (effectFn !== activeEffect)
       effectsToRun.add(effectFn)
