@@ -1,3 +1,4 @@
+import { isArray } from '@mini-vue/shared'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 
 type KeyToDepMap = Map<any, Set<any>>
@@ -69,7 +70,12 @@ export function track(target: object, key: unknown) {
 
 // `set`: trigger value
 
-export function trigger(target: object, type: TriggerOpTypes, key: unknown) {
+export function trigger(
+  target: object,
+  type: TriggerOpTypes,
+  key?: unknown,
+  value?: unknown,
+) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
 
@@ -86,6 +92,25 @@ export function trigger(target: object, type: TriggerOpTypes, key: unknown) {
     iterateEffects && iterateEffects.forEach((effectFn) => {
       if (effectFn !== activeEffect)
         effectsToRun.add(effectFn)
+    })
+  }
+
+  if (type === TriggerOpTypes.ADD && isArray(target)) {
+    const lengthEffects = depsMap.get('length')
+    lengthEffects && lengthEffects.forEach((effectFn) => {
+      if (effectFn !== activeEffect)
+        effectsToRun.add(effectFn)
+    })
+  }
+
+  if (isArray(target) && key === 'length') {
+    depsMap.forEach((effects, ind) => {
+      if (ind >= Number(value)) {
+        effects.forEach((effectFn) => {
+          if (effectFn !== activeEffect)
+            effectsToRun.add(effectFn)
+        })
+      }
     })
   }
 
