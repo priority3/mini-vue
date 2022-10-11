@@ -1,12 +1,14 @@
 // import { isIntegerKey } from '@mini-vue/shared'
-import { extend, hasChanged, hasOwn, isObject } from '@mini-vue/shared'
+import { extend, hasChanged, hasOwn, isArray, isIntegerKey, isObject } from '@mini-vue/shared'
 import { track, trigger } from './effect'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
-import { ReactiveFlags, reactive } from './reactive'
+import { ReactiveFlags, reactive, readonly } from './reactive'
 
 const get = createGetter()
-const shallowGet = createGetter(true)
-function createGetter(shallow = false) {
+const shallowGet = createGetter(false, true)
+const readonlyGet = createGetter(true)
+const shallowReadonlyGet = createGetter(true, true)
+function createGetter(isReadonly = false, shallow = false) {
   return function get(
     target: Object,
     key: string | symbol,
@@ -16,34 +18,45 @@ function createGetter(shallow = false) {
       return target
 
     const res = Reflect.get(target, key, receiver)
-    track(target, key)
+    if (!isReadonly)
+      track(target, key)
 
     if (shallow)
       return res
 
     if (isObject(res))
-      return reactive(res)
+      return isReadonly ? readonly(res) : reactive(res)
 
     return res
   }
 }
 const set = createSetter()
-const shallowSet = createSetter(true)
-function createSetter(shallow = false) {
+const shallowSet = createSetter(false, true)
+const readonlySet = createSetter(true)
+const shallowReadonlySet = createSetter(true, true)
+function createSetter(isReadonly = false, shallow = false) {
   return function set(
     target: object,
     key: string | symbol,
     value: unknown,
     receiver: object,
   ) {
+    if (isReadonly) {
+      console.warn(`property${key as string} is readonly`)
+
+      return true
+    }
+
     const oldValue = target[key]
-    const hadKey = hasOwn(target, key)
+    const hadKey = isArray(target) && isIntegerKey(key)
+      ? Number(key) < target.length
+      : hasOwn(target, key)
 
     const result = Reflect.set(target, key, value, receiver)
     if (!hadKey)
-      trigger(target, TriggerOpTypes.ADD, key)
+      trigger(target, TriggerOpTypes.ADD, key, value)
     else if (hasChanged(value, oldValue))
-      trigger(target, TriggerOpTypes.SET, key)
+      trigger(target, TriggerOpTypes.SET, key, value)
 
     return result
   }
@@ -96,3 +109,19 @@ export const shallowReactiveHandlers = extend(
   },
 )
 
+export const readonlyHandlers = extend(
+  {},
+  mutableHandlers,
+  {
+    get: readonlyGet,
+    set: readonlySet,
+  },
+)
+export const shallowReadonlyHandlers = extend(
+  {},
+  mutableHandlers,
+  {
+    get: shallowReadonlyGet,
+    set: shallowReadonlySet,
+  },
+)

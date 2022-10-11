@@ -1,5 +1,10 @@
 import { isObject } from '@mini-vue/shared'
-import { mutableHandlers, shallowReactiveHandlers } from './baseHandlers'
+import {
+  mutableHandlers,
+  readonlyHandlers,
+  shallowReactiveHandlers,
+  shallowReadonlyHandlers,
+} from './baseHandlers'
 const proxyMap = new WeakMap()
 // proxyMap key type
 
@@ -39,4 +44,12 @@ export function reactive(target: object) {
 
 export function shallowReactive(target: object) {
   return createReactiveObject(target, shallowReactiveHandlers)
+}
+
+export function readonly<T extends object>(target: T) {
+  return createReactiveObject(target, readonlyHandlers)
+}
+
+export function shallowReadonly<T extends object>(target: T) {
+  return createReactiveObject(target, shallowReadonlyHandlers)
 }
