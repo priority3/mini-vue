@@ -86,4 +86,45 @@ describe('reactive test', () => {
     expect(fn0).toHaveBeenCalledTimes(1)
     expect(fn1).toHaveBeenCalledTimes(2)
   })
+
+  /**
+   * array iterate
+   * arr[Symbol.iterator] = function () {
+   *  const tartget = this
+   *  const len = arr.length
+   *  const index = 0
+   *  return {
+   *    next(){
+   *      return {
+   *        value: index < len ? tartget[index] : undefined,
+   *        done: index++ >= len
+   *      }
+   *    }
+   *  }
+   * }
+   *
+   *
+   * arr.values === arr[Symbol.iterator] ---> true
+   */
+
+  it('array for in', () => {
+    const arr = reactive([1, 2, 3])
+    const fn = vi.fn(() => {
+      // avoid
+      for (const i in arr)
+        i
+    })
+    const fn2 = vi.fn(() => {
+      for (const i of arr)
+        i
+    })
+    effect(fn)
+    effect(fn2)
+    expect(fn).toHaveBeenCalledTimes(1)
+    expect(fn2).toHaveBeenCalledTimes(1)
+
+    arr.length = 0
+    expect(fn2).toHaveBeenCalledTimes(2)
+    expect(fn).toHaveBeenCalledTimes(2)
+  })
 })

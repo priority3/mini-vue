@@ -1,4 +1,4 @@
-import { isArray } from '@mini-vue/shared'
+import { isArray, toRawType } from '@mini-vue/shared'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 
 type KeyToDepMap = Map<any, Set<any>>
@@ -105,7 +105,7 @@ export function trigger(
 
   if (isArray(target) && key === 'length') {
     depsMap.forEach((effects, ind) => {
-      if (ind >= Number(value)) {
+      if (ind === 'length' || (toRawType(ind) !== 'Symbol' && ind >= (value as number))) {
         effects.forEach((effectFn) => {
           if (effectFn !== activeEffect)
             effectsToRun.add(effectFn)

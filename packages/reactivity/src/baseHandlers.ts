@@ -74,7 +74,8 @@ function has(target: object, key: string | symbol) {
 // - Object.keys()
 // - for…in
 function ownKeys(target: object) {
-  track(target, TrackOpTypes.ITERATE)
+  const type = isArray(target) ? 'length' : TrackOpTypes.ITERATE
+  track(target, type)
 
   return Reflect.ownKeys(target)
 }
