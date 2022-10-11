@@ -81,7 +81,7 @@ export function trigger(target: object, type: TriggerOpTypes, key: unknown) {
       effectsToRun.add(effectFn)
   })
 
-  if (type === TriggerOpTypes.ADD) {
+  if (type === TriggerOpTypes.ADD || type === TriggerOpTypes.DELETE) {
     const iterateEffects = depsMap.get(TrackOpTypes.ITERATE)
     iterateEffects && iterateEffects.forEach((effectFn) => {
       if (effectFn !== activeEffect)

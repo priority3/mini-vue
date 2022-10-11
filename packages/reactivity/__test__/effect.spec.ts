@@ -131,5 +131,16 @@ describe('reactivity/effect', () => {
     obj.age = 1
     expect(forFn).toHaveBeenCalledTimes(2)
   })
+
+  it('effect delete', () => {
+    const obj = reactive({ foo: 1 })
+    const forFn = vi.fn((arg: Array<string | symbol>) => arg)
+    effect(() => {
+      forFn(Object.keys(obj))
+    })
+    expect(forFn).toHaveBeenCalledTimes(1)
+    delete obj.foo
+    expect(forFn).toHaveBeenCalledTimes(2)
+  })
 })
 

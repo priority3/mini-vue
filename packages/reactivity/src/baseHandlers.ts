@@ -53,6 +53,17 @@ function ownKeys(target: object) {
   return Reflect.ownKeys(target)
 }
 
+function deleteProperty(target: object, key: string | symbol) {
+  const hadKey = hasOwn(target, key)
+
+  const result = Reflect.deleteProperty(target, key)
+
+  if (hadKey && result)
+    trigger(target, TriggerOpTypes.DELETE, key)
+
+  return result
+}
+
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
@@ -60,5 +71,6 @@ export const mutableHandlers: ProxyHandler<object> = {
   has,
   // for in
   ownKeys,
+  deleteProperty,
 }
 
