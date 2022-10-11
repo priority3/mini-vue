@@ -1,3 +1,3 @@
 export { effect } from './effect'
-export { reactive } from './reactive'
+export { reactive, shallowReactive } from './reactive'
 export { computed } from './computed'

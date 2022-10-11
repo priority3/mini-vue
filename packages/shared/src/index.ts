@@ -26,3 +26,4 @@ export const toRawType = (value: unknown): string => {
   return toTypeString(value).slice(8, -1)
 }
 
+export const extend = Object.assign
