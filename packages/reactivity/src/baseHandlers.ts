@@ -1,11 +1,12 @@
 // import { isIntegerKey } from '@mini-vue/shared'
-import { hasChanged, hasOwn } from '@mini-vue/shared'
+import { extend, hasChanged, hasOwn, isObject } from '@mini-vue/shared'
 import { track, trigger } from './effect'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
-import { ReactiveFlags } from './reactive'
+import { ReactiveFlags, reactive } from './reactive'
 
 const get = createGetter()
-function createGetter() {
+const shallowGet = createGetter(true)
+function createGetter(shallow = false) {
   return function get(
     target: Object,
     key: string | symbol,
@@ -17,11 +18,18 @@ function createGetter() {
     const res = Reflect.get(target, key, receiver)
     track(target, key)
 
+    if (shallow)
+      return res
+
+    if (isObject(res))
+      return reactive(res)
+
     return res
   }
 }
 const set = createSetter()
-function createSetter() {
+const shallowSet = createSetter(true)
+function createSetter(shallow = false) {
   return function set(
     target: object,
     key: string | symbol,
@@ -78,4 +86,13 @@ export const mutableHandlers: ProxyHandler<object> = {
   ownKeys,
   deleteProperty,
 }
+
+export const shallowReactiveHandlers = extend(
+  {},
+  mutableHandlers,
+  {
+    get: shallowGet,
+    set: shallowSet,
+  },
+)
 

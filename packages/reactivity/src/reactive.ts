@@ -1,5 +1,5 @@
 import { isObject } from '@mini-vue/shared'
-import { mutableHandlers } from './baseHandlers'
+import { mutableHandlers, shallowReactiveHandlers } from './baseHandlers'
 const proxyMap = new WeakMap()
 // proxyMap key type
 
@@ -20,6 +20,9 @@ export interface Target {
 }
 
 function createReactiveObject(target: Target, baseHandlers: ProxyHandler<any>) {
+  if (!isObject(target))
+    console.warn('target must be an object')
+
   const existProxy = proxyMap.get(target)
   if (existProxy)
     return existProxy
@@ -30,9 +33,10 @@ function createReactiveObject(target: Target, baseHandlers: ProxyHandler<any>) {
   return proxy
 }
 
-export function reactive(target: Object) {
-  if (!isObject(target))
-    console.warn('target must be an object')
-
+export function reactive(target: object) {
   return createReactiveObject(target, mutableHandlers)
+}
+
+export function shallowReactive(target: object) {
+  return createReactiveObject(target, shallowReactiveHandlers)
 }
