@@ -1,7 +1,8 @@
 // import { isIntegerKey } from '@mini-vue/shared'
-import { hasOwn } from '@mini-vue/shared'
+import { hasChanged, hasOwn } from '@mini-vue/shared'
 import { track, trigger } from './effect'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
+import { ReactiveFlags } from './reactive'
 
 const get = createGetter()
 function createGetter() {
@@ -10,6 +11,9 @@ function createGetter() {
     key: string | symbol,
     receiver: object,
   ) {
+    if (key === ReactiveFlags.RAW)
+      return target
+
     const res = Reflect.get(target, key, receiver)
     track(target, key)
 
@@ -24,13 +28,14 @@ function createSetter() {
     value: unknown,
     receiver: object,
   ) {
+    const oldValue = target[key]
     const hadKey = hasOwn(target, key)
 
     const result = Reflect.set(target, key, value, receiver)
-    if (hadKey)
-      trigger(target, TriggerOpTypes.SET, key)
-    else
+    if (!hadKey)
       trigger(target, TriggerOpTypes.ADD, key)
+    else if (hasChanged(value, oldValue))
+      trigger(target, TriggerOpTypes.SET, key)
 
     return result
   }
