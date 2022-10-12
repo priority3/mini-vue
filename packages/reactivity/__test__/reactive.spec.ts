@@ -205,9 +205,28 @@ describe('reactive test', () => {
         v
       }
     })
+    const fn2 = vi.fn(() => {
+      obj.entries()
+    })
+    const fn3 = vi.fn(() => {
+      obj.keys()
+    })
+    const fn4 = vi.fn(() => {
+      obj.values()
+    })
     effect(fn)
+    effect(fn2)
+    effect(fn3)
+    effect(fn4)
     expect(fn).toHaveBeenCalledTimes(1)
+    expect(fn2).toHaveBeenCalledTimes(1)
+    expect(fn3).toHaveBeenCalledTimes(1)
+    expect(fn4).toHaveBeenCalledTimes(1)
+
     obj.set('bar', 2)
     expect(fn).toHaveBeenCalledTimes(2)
+    expect(fn2).toHaveBeenCalledTimes(2)
+    expect(fn3).toHaveBeenCalledTimes(2)
+    expect(fn4).toHaveBeenCalledTimes(2)
   })
 })
