@@ -5,7 +5,11 @@ import {
   shallowReactiveHandlers,
   shallowReadonlyHandlers,
 } from './baseHandlers'
-const proxyMap = new WeakMap()
+
+export const reactiveMap = new WeakMap<Target, any>()
+export const shallowReactiveMap = new WeakMap<Target, any>()
+export const readonlyMap = new WeakMap<Target, any>()
+export const shallowReadonlyMap = new WeakMap<Target, any>()
 // proxyMap key type
 
 export const enum ReactiveFlags {
@@ -24,7 +28,11 @@ export interface Target {
   [ReactiveFlags.RAW]?: any
 }
 
-function createReactiveObject(target: Target, baseHandlers: ProxyHandler<any>) {
+function createReactiveObject(
+  target: Target,
+  baseHandlers: ProxyHandler<any>,
+  proxyMap: WeakMap<Target, any>,
+) {
   if (!isObject(target))
     console.warn('target must be an object')
 
@@ -39,17 +47,43 @@ function createReactiveObject(target: Target, baseHandlers: ProxyHandler<any>) {
 }
 
 export function reactive(target: object) {
-  return createReactiveObject(target, mutableHandlers)
+  return createReactiveObject(target, mutableHandlers, reactiveMap)
 }
 
 export function shallowReactive(target: object) {
-  return createReactiveObject(target, shallowReactiveHandlers)
+  return createReactiveObject(target, shallowReactiveHandlers, shallowReactiveMap)
 }
 
 export function readonly<T extends object>(target: T) {
-  return createReactiveObject(target, readonlyHandlers)
+  return createReactiveObject(target, readonlyHandlers, readonlyMap)
 }
 
 export function shallowReadonly<T extends object>(target: T) {
-  return createReactiveObject(target, shallowReadonlyHandlers)
+  return createReactiveObject(target, shallowReadonlyHandlers, shallowReadonlyMap)
+}
+
+// track
+export function toRaw<T>(observed: T): T {
+  const raw = observed && (observed as Target)[ReactiveFlags.RAW]
+
+  return raw ? toRaw(raw) : observed
+}
+
+export function isReactive(value: unknown): boolean {
+  if (isReadonly(value))
+    return isReactive((value as Target)[ReactiveFlags.RAW])
+
+  return !!(value && (value as Target)[ReactiveFlags.IS_REACTIVE])
+}
+
+export function isReadonly(value: unknown): boolean {
+  return !!(value && (value as Target)[ReactiveFlags.IS_READONLY])
+}
+
+export function isShallow(value: unknown): boolean {
+  return !!(value && (value as Target)[ReactiveFlags.IS_SHALLOW])
+}
+
+export function isProxy(value: unknown): boolean {
+  return isReactive(value) || isReadonly(value)
 }
