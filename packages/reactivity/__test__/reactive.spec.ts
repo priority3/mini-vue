@@ -127,4 +127,87 @@ describe('reactive test', () => {
     expect(fn2).toHaveBeenCalledTimes(2)
     expect(fn).toHaveBeenCalledTimes(2)
   })
+
+  it('array includes', () => {
+    // includes will create arr[0]
+    // visit arr[0] will create arr[0] too
+    const arr = reactive([{}])
+    expect(arr.includes(arr[0])).toBe(true)
+
+    const obj = { a: 1 }
+    const arr2 = reactive([obj])
+    expect(arr2.includes(obj)).toBe(true)
+  })
+
+  it('array Implicitly modify the length', () => {
+    const arr = reactive([1, 2, 3])
+    const fn = vi.fn(() => arr.push(1))
+    effect(fn)
+    effect(fn)
+  })
+
+  it('map reactive', () => {
+    const map = reactive(new Map([['key', 1], ['foo', 2]]))
+    // get set
+    const getFn = vi.fn(() => map.get('key'))
+    effect(getFn)
+    expect(getFn).toHaveBeenCalledTimes(1)
+    map.set('key', 2)
+    expect(getFn).toHaveBeenCalledTimes(2)
+
+    // delete
+    const sizeFn = vi.fn(() => map.size)
+    effect(sizeFn)
+    expect(sizeFn).toHaveBeenCalledTimes(1)
+    map.delete('key')
+    expect(sizeFn).toHaveBeenCalledTimes(2)
+
+    // set
+    map.set('foo', 2)
+    expect(sizeFn).toHaveBeenCalledTimes(2)
+
+    map.set('bar', 3)
+    expect(sizeFn).toHaveBeenCalledTimes(3)
+  })
+  // TODO
+  // it('map reactive data pollution', () => {
+  //   const foo = reactive(new Map())
+  //   const m = new Map([['foo', foo]])
+  //   const p1 = reactive(m)
+  //   const fn = vi.fn(() => m.get('foo').size)
+
+  //   effect(fn)
+
+  //   expect(fn).toHaveBeenCalledTimes(1)
+  //   m.get('foo').set('bar', 1)
+  //   expect(fn).toHaveBeenCalledTimes(1)
+  // })
+
+  it('map for each', () => {
+    const obj = reactive(new Map([['foo', 1]]))
+    const fn = vi.fn(() => obj.forEach((v, k) => {
+      k
+      v
+    }))
+    effect(fn)
+    expect(fn).toHaveBeenCalledTimes(1)
+    obj.set('bar', 2)
+    expect(fn).toHaveBeenCalledTimes(2)
+    obj.set('foo', 3)
+    expect(fn).toHaveBeenCalledTimes(3)
+  })
+
+  it('map iterator', () => {
+    const obj = reactive(new Map([['foo', 1]]))
+    const fn = vi.fn(() => {
+      for (const [k, v] of obj) {
+        k
+        v
+      }
+    })
+    effect(fn)
+    expect(fn).toHaveBeenCalledTimes(1)
+    obj.set('bar', 2)
+    expect(fn).toHaveBeenCalledTimes(2)
+  })
 })

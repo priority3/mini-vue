@@ -16,6 +16,9 @@ const effectStack: Array<{
   options: ReactiveEffectOptions | undefined
 }> = []
 
+export const ITERATE_KEY = Symbol('iterate')
+export const MAP_KEY_ITERATE_KEY = Symbol('Map key iterate')
+
 export type EffectScheduler = (...args: any[]) => any
 export interface ReactiveEffectOptions {
   lazy?: boolean
@@ -92,7 +95,8 @@ export function trigger(
   target: object,
   type: TriggerOpTypes,
   key?: unknown,
-  value?: unknown,
+  newValue?: unknown,
+  oldValue?: unknown,
 ) {
   const depsMap = targetMap.get(target)
   if (!depsMap) return
@@ -105,6 +109,7 @@ export function trigger(
       effectsToRun.add(effectFn)
   })
 
+  // for in
   if (type === TriggerOpTypes.ADD || type === TriggerOpTypes.DELETE) {
     const iterateEffects = depsMap.get(TrackOpTypes.ITERATE)
     iterateEffects && iterateEffects.forEach((effectFn) => {
@@ -112,7 +117,20 @@ export function trigger(
         effectsToRun.add(effectFn)
     })
   }
+  // set map size
+  if (
+    type === TriggerOpTypes.ADD
+    || type === TriggerOpTypes.DELETE
+    || (type === TriggerOpTypes.SET && toRawType(target) === 'Map')
+  ) {
+    const iterateEffects = depsMap.get(ITERATE_KEY)
+    iterateEffects && iterateEffects.forEach((effectFn) => {
+      if (effectFn !== activeEffect)
+        effectsToRun.add(effectFn)
+    })
+  }
 
+  // array length
   if (type === TriggerOpTypes.ADD && isArray(target)) {
     const lengthEffects = depsMap.get('length')
     lengthEffects && lengthEffects.forEach((effectFn) => {
@@ -123,9 +141,9 @@ export function trigger(
 
   if (isArray(target) && key === 'length') {
     depsMap.forEach((effects, ind) => {
-      // (toRawType(ind) !== 'Symbol' && ind >= (value as number))
+      // (toRawType(ind) !== 'Symbol' && ind >= (newValue as number))
       // TODO
-      if (ind === 'length' || (toRawType(ind) !== 'Symbol' && ind >= (value as number))) {
+      if (ind === 'length' || (toRawType(ind) !== 'Symbol' && ind >= (newValue as number))) {
         effects.forEach((effectFn) => {
           if (effectFn !== activeEffect)
             effectsToRun.add(effectFn)

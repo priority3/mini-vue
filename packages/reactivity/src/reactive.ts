@@ -1,10 +1,18 @@
-import { isObject } from '@mini-vue/shared'
+import { isObject, toRawType } from '@mini-vue/shared'
 import {
   mutableHandlers,
   readonlyHandlers,
   shallowReactiveHandlers,
   shallowReadonlyHandlers,
+
 } from './baseHandlers'
+
+import {
+  mutableCollectionHandlers,
+  readonlyCollectionHandlers,
+  shallowCollectionHandlers,
+  shallowReadonlyCollectionHandlers,
+} from './collectionHandlers'
 
 export const reactiveMap = new WeakMap<Target, any>()
 export const shallowReactiveMap = new WeakMap<Target, any>()
@@ -28,9 +36,31 @@ export interface Target {
   [ReactiveFlags.RAW]?: any
 }
 
+const enum TargetType {
+  INVALID = 0,
+  COMMON = 1,
+  COLLECTION = 2,
+}
+
+function targetTypeMap(rawType: string) {
+  switch (rawType) {
+    case 'Object':
+    case 'Array':
+      return TargetType.COMMON
+    case 'Map':
+    case 'Set':
+    case 'WeakMap':
+    case 'WeakSet':
+      return TargetType.COLLECTION
+    default:
+      return TargetType.INVALID
+  }
+}
+
 function createReactiveObject(
   target: Target,
   baseHandlers: ProxyHandler<any>,
+  collectionHandlers: ProxyHandler<any>,
   proxyMap: WeakMap<Target, any>,
 ) {
   if (!isObject(target))
@@ -39,7 +69,9 @@ function createReactiveObject(
   const existProxy = proxyMap.get(target)
   if (existProxy)
     return existProxy
-  const proxy = new Proxy(target, baseHandlers)
+
+  const handlers = targetTypeMap(toRawType(target)) === TargetType.COLLECTION ? collectionHandlers : baseHandlers
+  const proxy = new Proxy(target, handlers)
 
   proxyMap.set(target, proxy)
 
@@ -47,19 +79,39 @@ function createReactiveObject(
 }
 
 export function reactive(target: object) {
-  return createReactiveObject(target, mutableHandlers, reactiveMap)
+  return createReactiveObject(
+    target,
+    mutableHandlers,
+    mutableCollectionHandlers,
+    reactiveMap,
+  )
 }
 
 export function shallowReactive(target: object) {
-  return createReactiveObject(target, shallowReactiveHandlers, shallowReactiveMap)
+  return createReactiveObject(
+    target,
+    shallowReactiveHandlers,
+    shallowCollectionHandlers,
+    shallowReactiveMap,
+  )
 }
 
 export function readonly<T extends object>(target: T) {
-  return createReactiveObject(target, readonlyHandlers, readonlyMap)
+  return createReactiveObject(
+    target,
+    readonlyHandlers,
+    readonlyCollectionHandlers,
+    readonlyMap,
+  )
 }
 
 export function shallowReadonly<T extends object>(target: T) {
-  return createReactiveObject(target, shallowReadonlyHandlers, shallowReadonlyMap)
+  return createReactiveObject(
+    target,
+    shallowReadonlyHandlers,
+    shallowReadonlyCollectionHandlers,
+    shallowReadonlyMap,
+  )
 }
 
 // track
@@ -87,3 +139,9 @@ export function isShallow(value: unknown): boolean {
 export function isProxy(value: unknown): boolean {
   return isReactive(value) || isReadonly(value)
 }
+
+export const toReactive = <T>(value: T): T =>
+  isObject(value) ? reactive(value) : value
+
+export const toReadonly = <T>(value: T): T =>
+  isObject(value) ? readonly(value as Record<any, any>) : value
