@@ -6,3 +6,10 @@ export {
   shallowReadonly,
 } from './reactive'
 export { computed } from './computed'
+
+export {
+  toRef,
+  toRefs,
+  isRef,
+  ref,
+} from './ref'
