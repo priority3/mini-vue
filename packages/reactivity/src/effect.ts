@@ -117,13 +117,25 @@ export function trigger(
         effectsToRun.add(effectFn)
     })
   }
-  // set map size
+  // set size
   if (
     type === TriggerOpTypes.ADD
     || type === TriggerOpTypes.DELETE
     || (type === TriggerOpTypes.SET && toRawType(target) === 'Map')
   ) {
     const iterateEffects = depsMap.get(ITERATE_KEY)
+    iterateEffects && iterateEffects.forEach((effectFn) => {
+      if (effectFn !== activeEffect)
+        effectsToRun.add(effectFn)
+    })
+  }
+
+  if (
+    type === TriggerOpTypes.ADD
+    || type === TriggerOpTypes.DELETE
+    || (type === TriggerOpTypes.SET && toRawType(target) === 'Map')
+  ) {
+    const iterateEffects = depsMap.get(MAP_KEY_ITERATE_KEY)
     iterateEffects && iterateEffects.forEach((effectFn) => {
       if (effectFn !== activeEffect)
         effectsToRun.add(effectFn)
