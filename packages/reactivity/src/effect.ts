@@ -4,6 +4,10 @@ import { TrackOpTypes, TriggerOpTypes } from './operations'
 type KeyToDepMap = Map<any, Set<any>>
 const targetMap = new WeakMap<any, KeyToDepMap>()
 
+// eslint-disable-next-line import/no-mutable-exports
+export let shouldTrack = true
+const trackStack: boolean[] = []
+
 let activeEffect: effectFnType | undefined
 
 const effectStack: Array<{
@@ -51,21 +55,35 @@ function cleanupEffect(effectFn: any) {
   effectFn.deps.length = 0
 }
 
+export function pauseTracking() {
+  trackStack.push(shouldTrack)
+  shouldTrack = false
+}
+
+export function enableTracking() {
+  trackStack.push(shouldTrack)
+  shouldTrack = true
+}
+
+export function resetTracking() {
+  const last = trackStack.pop()
+  shouldTrack = last === undefined ? true : last
+}
+
 // `get`: track value
 export function track(target: object, key: unknown) {
-  if (!activeEffect)
-    return
+  if (activeEffect && shouldTrack) {
+    let depsMap = targetMap.get(target)
+    if (!depsMap)
+      targetMap.set(target, (depsMap = new Map()))
 
-  let depsMap = targetMap.get(target)
-  if (!depsMap)
-    targetMap.set(target, (depsMap = new Map()))
+    let deps = depsMap.get(key)
+    if (!deps)
+      depsMap.set(key, (deps = new Set()))
 
-  let deps = depsMap.get(key)
-  if (!deps)
-    depsMap.set(key, (deps = new Set()))
-
-  deps.add(activeEffect)
-  activeEffect.deps.push(deps)
+    deps.add(activeEffect)
+    activeEffect.deps.push(deps)
+  }
 }
 
 // `set`: trigger value
@@ -105,6 +123,8 @@ export function trigger(
 
   if (isArray(target) && key === 'length') {
     depsMap.forEach((effects, ind) => {
+      // (toRawType(ind) !== 'Symbol' && ind >= (value as number))
+      // TODO
       if (ind === 'length' || (toRawType(ind) !== 'Symbol' && ind >= (value as number))) {
         effects.forEach((effectFn) => {
           if (effectFn !== activeEffect)
