@@ -12,6 +12,9 @@
     "lint:fix": "eslint --cache --ext .ts packages/*/{src,__tests__}/**.ts --fix --max-warnings 0"
   },
   "devDependencies": {
+    "@mini-vue/reactivity": "workspace:^1.0.0",
+    "@mini-vue/runtime-core": "workspace:^1.0.0",
+    "@mini-vue/shared": "workspace:^1.0.0",
     "@pity/eslint-config": "^0.1.9",
     "eslint": "^8.24.0",
     "typescript": "^4.8.4",

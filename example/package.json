@@ -1,0 +1,15 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "",
+  "author": "priority",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "@mini-vue/reactivity": "workspace:*",
+    "@mini-vue/runtime-core": "workspace:*"
+  }
+}
