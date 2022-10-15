@@ -47,6 +47,12 @@ importers:
     devDependencies:
       '@mini-vue/shared': link:../shared
 
+  packages/runtime-test:
+    specifiers:
+      '@mini-vue/runtime-core': workspace:^1.0.0
+    dependencies:
+      '@mini-vue/runtime-core': link:../runtime-core
+
   packages/shared:
     specifiers: {}
 

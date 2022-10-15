@@ -1,4 +1,4 @@
-import { isArray, toRawType } from '@mini-vue/shared'
+import { isArray, isObject, isString, toRawType } from '@mini-vue/shared'
 
 export interface RendererNode {
   [key: string]: any
@@ -21,19 +21,35 @@ export function createRenderer(options: RenderProps) {
 
   } = options
   function patch(oldVnode: RendererNode | null, vnode: RendererNode, container: RendererElement) {
-    // new
-    if (!oldVnode)
-      mountElement(vnode, container)
-    // else
-    // TODO
-  }
-  function render(vnode: RendererNode, container: RendererElement) {
+    // patch new
+    if (oldVnode && oldVnode.type !== vnode.type) {
+      unmount(oldVnode)
+      oldVnode = null
+    }
     //
-    if (vnode)
-      patch(container._vnode, vnode, container)
+    const { type } = vnode
+    if (isString(type)) {
+      if (!oldVnode)
+        mountElement(vnode, container)
+      // else
+      // TODO patch update
+    }
+    else if (isObject(type)) {
+      // components
+    }
+    else {
+      // others
+
+    }
+  }
+  function render(vnode: RendererNode | null, container: RendererElement) {
+    //
+    if (vnode) patch(container._vnode, vnode, container)
     // unmounted
     else if (container._vnode)
-      container.innerHTML = ''
+      unmount(container._vnode)
+
+    container._vnode = vnode
   }
   function hydrate() {
 
@@ -46,7 +62,8 @@ export function createRenderer(options: RenderProps) {
 
   function mountElement(vnode: RendererNode, container: RendererElement) {
     // current node
-    const el = createElement(vnode.type)
+    // establish relationship between vnode and dom
+    const el = vnode.el = createElement(vnode.type)
 
     if (toRawType(vnode.children) === 'String') {
       setElement(el, vnode.children)
@@ -82,7 +99,40 @@ export function createApp() {
     container.appendChild(el)
   }
   function patchProps(el: RendererElement, key: string, prevValue: any, nextValue: any) {
-    if (shouldSetAsProps(el, key, nextValue)) {
+    if (/^on/.test(key)) {
+      const eventName = key.slice(2).toLowerCase()
+      // get prev event
+      const invokers = el._vei || (el._vei = {})
+      let invoker = invokers[key]
+      if (nextValue) {
+        if (!invoker) {
+          invoker = el._vei[key] = (e) => {
+            if (isArray(invoker.value))
+              invoker.value.forEach(fn => fn())
+
+            else
+              invoker.value(e)
+          }
+          invoker.value = nextValue
+          el.addEventListener(eventName, invoker)
+        }
+        else {
+          // update
+          invoker.value = nextValue
+        }
+      }
+      else {
+        // nextValue is null but preValue is exit,so remove the listener
+        el.removeEventListener(eventName, invoker)
+      }
+    }
+    // performance  className > classList  > setAttribute
+    else if (key === 'class') {
+      // className
+      const value = normalizeClass(nextValue)
+      el.className = value
+    }
+    else if (shouldSetAsProps(el, key, nextValue)) {
       // el[key](DOM Property) !== props[key](HTML Attribute)
 
       const type = toRawType(el[key])
@@ -96,12 +146,6 @@ export function createApp() {
       el.setAttribute(key, nextValue)
     }
   }
-  function shouldSetAsProps(el: RendererElement, key: string, nextValue: string) {
-    if (key === 'form' && el.tagName === 'INPUT')
-      return false
-
-    return key in el
-  }
 
   return createRenderer({
     createElement,
@@ -109,4 +153,32 @@ export function createApp() {
     patchProps,
     insert,
   })
+
+  function shouldSetAsProps(el: RendererElement, key: string, nextValue: string) {
+    if (key === 'form' && el.tagName === 'INPUT')
+      return false
+
+    return key in el
+  }
+
+  function normalizeClass(nextValue: any) {
+    if (isString(nextValue)) {
+      return nextValue
+    }
+    else if (isArray(nextValue)) {
+      return nextValue.map(item => normalizeClass(item)).join(' ')
+    }
+    else if (isObject(nextValue)) {
+      // eslint-disable-next-line array-callback-return
+      return Object.keys(nextValue).map((item) => {
+        if (nextValue[item])
+          return item
+      }).filter(Boolean).join(' ')
+    }
+  }
+}
+
+function unmount(vnode: RendererNode) {
+  const parent = vnode.el.parentNode
+  parent && parent.removeChild(vnode.el)
 }
