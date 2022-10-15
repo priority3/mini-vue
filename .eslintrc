@@ -1,3 +1,6 @@
 {
-  "extends": "@pity"
+  "extends": "@pity",
+  "rules": {
+    "no-console": "off"
+  }
 }

@@ -18,8 +18,8 @@ export function createRenderer(options: RenderProps) {
     setElement,
     insert,
     patchProps,
-
   } = options
+
   function patch(oldVnode: RendererNode | null, vnode: RendererNode, container: RendererElement) {
     // patch new
     if (oldVnode && oldVnode.type !== vnode.type) {
@@ -29,8 +29,11 @@ export function createRenderer(options: RenderProps) {
     //
     const { type } = vnode
     if (isString(type)) {
-      if (!oldVnode)
+      if (oldVnode == null)
         mountElement(vnode, container)
+      else
+        patchElement(oldVnode, vnode)
+
       // else
       // TODO patch update
     }
@@ -43,7 +46,6 @@ export function createRenderer(options: RenderProps) {
     }
   }
   function render(vnode: RendererNode | null, container: RendererElement) {
-    //
     if (vnode) patch(container._vnode, vnode, container)
     // unmounted
     else if (container._vnode)
@@ -58,6 +60,62 @@ export function createRenderer(options: RenderProps) {
   return {
     render,
     hydrate,
+  }
+  /**
+   * text node array<node>
+   * @param n1 old
+   * @param n2 new
+   */
+  function patchElement(n1: RendererNode, n2: RendererNode) {
+    const el = n2.el = n1.el
+    const oldProps = n1.props || {}
+    const newProps = n2.props || {}
+    for (const key in newProps) {
+      if (newProps[key] !== oldProps[key])
+        patchProps(el, key, oldProps[key], newProps[key])
+    }
+    for (const key in oldProps) {
+      if (newProps[key] == null)
+        patchProps(el, key, oldProps[key], null)
+    }
+    patchChildren(n1, n2, el)
+  }
+
+  function patchChildren(n1: RendererNode, n2: RendererNode, container: RendererElement) {
+    // new node children is string
+    if (isString(n2.children)) {
+      // raw node is array
+      if (isArray(n1.children))
+        n1.children.forEach(unmount)
+      // raw node is string or node
+      setElement(container, n2.children)
+    }
+    // new node children is array
+    else if (isArray(n2.children)) {
+      // old node is array
+      if (isArray(n1.children)) {
+        // TODO diff
+        // just now
+        n1.children.forEach(unmount)
+        n2.children.forEach((child) => {
+          patch(null, child, container)
+        })
+      }
+      // old node is string or node
+      else {
+        setElement(container, '')
+        n2.children.forEach((child) => {
+          patch(null, child, container)
+        })
+      }
+    }
+    // new node not children
+    else {
+      if (isArray(n1.children))
+        n1.forEach(unmount)
+      else if (isString(n1.children))
+        setElement(container, '')
+    }
   }
 
   function mountElement(vnode: RendererNode, container: RendererElement) {
@@ -107,6 +165,8 @@ export function createApp() {
       if (nextValue) {
         if (!invoker) {
           invoker = el._vei[key] = (e) => {
+            // performance.now()
+            if (el.timeStamp < invoker.attached) return
             if (isArray(invoker.value))
               invoker.value.forEach(fn => fn())
 
@@ -114,6 +174,7 @@ export function createApp() {
               invoker.value(e)
           }
           invoker.value = nextValue
+          invoker.attached = performance.now()
           el.addEventListener(eventName, invoker)
         }
         else {
@@ -182,3 +243,10 @@ function unmount(vnode: RendererNode) {
   const parent = vnode.el.parentNode
   parent && parent.removeChild(vnode.el)
 }
+
+export type RootRenderFunction<HostElement = RendererElement> = (
+  // vnode: VNode | null,
+  vnode: any,
+  container: HostElement,
+  isSVG?: boolean
+) => void
