@@ -1,8 +1,15 @@
-import { createRenderer } from '@mini-vue/runtime-core'
+import { createApp } from '@mini-vue/runtime-core'
 
-const renderer = createRenderer()
+const renderer = createApp()
 
 renderer.render({
-  type: 'div',
-  children: 'hello world',
+  type: 'button',
+  props: {
+    id: 'foo',
+    disabled: false,
+  },
+  children: [{
+    type: 'p',
+    children: 'hello world',
+  }],
 }, document.getElementById('app') as HTMLElement)
