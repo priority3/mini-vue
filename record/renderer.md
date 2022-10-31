@@ -28,3 +28,21 @@ exp:
 if the HTML Attribute starts with `aria-*`, it is not mapping to DOM Property. 
 
 In the opposite sense of, the DOM Property `el.textContent`, it is not mapping to HTML Attribute.
+
+
+## multiple html node
+```js
+const Fragment = Symbol('Fragment')
+const vnode = {
+  tag: Fragment,
+  children: [
+    { tag: 'li', children: ['item 1'] },
+    { tag: 'li', children: ['item 2'] },
+    { tag: 'li', children: ['item 3'] }
+  ]
+}
+```
+
+
+## diff
+[diff-blog for me](https://priority-me.netlify.app/blogs/diff)
