@@ -67,6 +67,7 @@ export function createRenderer(options: RenderProps) {
    * @param n2 new
    */
   function patchElement(n1: RendererNode, n2: RendererNode) {
+    // new node and old node has same target element
     const el = n2.el = n1.el
     const oldProps = n1.props || {}
     const newProps = n2.props || {}
@@ -118,6 +119,10 @@ export function createRenderer(options: RenderProps) {
     }
   }
 
+  function Diff(n1: Array<RendererNode>, n2: Array<RendererNode>) {
+
+  }
+
   function mountElement(vnode: RendererNode, container: RendererElement) {
     // current node
     // establish relationship between vnode and dom
@@ -153,7 +158,7 @@ export function createApp() {
   function setElement(el: RendererElement, text: string) {
     el.textContent = text
   }
-  function insert(el: RendererElement, container: RendererElement) {
+  function insert(el: RendererElement, container: RendererElement, ancher?: RendererElement) {
     container.appendChild(el)
   }
   function patchProps(el: RendererElement, key: string, prevValue: any, nextValue: any) {
