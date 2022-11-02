@@ -1,51 +1,51 @@
 const State = {
-  initial: 1,
-  tagOpen: 2,
-  tagName: 3,
-  text: 4,
-  tagEnd: 5,
-  tagEndName: 6,
+  INITIAL: 1,
+  TAGOPEN: 2,
+  TAGNAME: 3,
+  TEXT: 4,
+  TAGEND: 5,
+  TAGENDNAME: 6,
 }
 function isAlpha(char: string) {
   return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
 }
 
-export function tokenize(str) {
-  let currentState = State.initial
+export function tokenize(str: string) {
+  let currentState = State.INITIAL
   const chars: Array<string | never> = []
   const tokens: object[] = []
   while (str) {
     const char = str[0]
     switch (currentState) {
-      case State.initial:
+      case State.INITIAL:
         if (char === '<') {
-          currentState = State.tagOpen
+          currentState = State.TAGOPEN
           str = str.slice(1)
         }
         else if (isAlpha(char)) {
-          currentState = State.text
+          currentState = State.TEXT
           chars.push(char)
           str = str.slice(1)
         }
         break
-      case State.tagOpen:
+      case State.TAGOPEN:
         if (isAlpha(char)) {
-          currentState = State.tagName
+          currentState = State.TAGNAME
           chars.push(char)
           str = str.slice(1)
         }
         else if (char === '/') {
-          currentState = State.tagEnd
+          currentState = State.TAGEND
           str = str.slice(1)
         }
         break
-      case State.tagName:
+      case State.TAGNAME:
         if (isAlpha(char)) {
           chars.push(char)
           str = str.slice(1)
         }
         else if (char === '>') {
-          currentState = State.initial
+          currentState = State.INITIAL
           tokens.push({
             type: 'tag',
             name: chars.join(''),
@@ -54,35 +54,35 @@ export function tokenize(str) {
           str = str.slice(1)
         }
         break
-      case State.text:
+      case State.TEXT:
         if (isAlpha(char)) {
           chars.push(char)
           str = str.slice(1)
         }
         else if (char === '<') {
-          currentState = State.tagOpen
+          currentState = State.TAGOPEN
           tokens.push({
-            type: 'text',
+            type: 'TEXT',
             content: chars.join(''),
           })
           chars.length = 0
           str = str.slice(1)
         }
         break
-      case State.tagEnd:
+      case State.TAGEND:
         if (isAlpha(char)) {
-          currentState = State.tagEndName
+          currentState = State.TAGENDNAME
           chars.push(char)
           str = str.slice(1)
         }
         break
-      case State.tagEndName:
+      case State.TAGENDNAME:
         if (isAlpha(char)) {
           chars.push(char)
           str = str.slice(1)
         }
         else if (char === '>') {
-          currentState = State.initial
+          currentState = State.INITIAL
           tokens.push({
             type: 'tagEnd',
             name: chars.join(''),
